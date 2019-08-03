@@ -3,7 +3,7 @@ import opengl/glut
 import opengl
 import opengl/glu
 
-const SECOND = 100000
+const SECOND = 1000000000
 
 type
   MyTime* = object
@@ -30,48 +30,6 @@ proc Stop*(e:CoreEngine): void {.inline} =
   echo "Stopping Game Engine"
   e.IsRunning = false
 
-proc displayLoop(e: CoreEngine): void {.inline.} =
-  let frame = 0
-  var frameCounter = 0
-
-  let frameTime = 1/float(e.config.FRAME_CAP)
-  var lastTime = cpuTime()
-  var unprocessedTime  =float(0)
-  echo lastTime
-
-  echo "I AM RUNNING"
-  while e.IsRunning:
-    if e.IsPaused != true:
-      var render = false
-      let startTime = cpuTime()
-      var passedTime = float(startTime) - float(lastTime)
-      lastTime = startTime
-
-      unprocessedTime = float(unprocessedTime) + float(passedTime)/float(SECOND)
-      frameCounter +=  int(passedTime)
-
-      while unprocessedTime > frameTime:
-        render = true
-        unprocessedTime -= frameTime
-
-proc Unpause*(e:CoreEngine): void {.inline.} =
-  if e.IsPaused != true :
-    return 
-  echo "Unpausing Game Engine"
-  e.IsPaused = false
-
-proc Pause*(e:CoreEngine): void {.inline.} =
-  if e.IsPaused :
-    return 
-  echo "Pausing Game Engine"
-  e.IsPaused = true
-
-proc Start*(e:CoreEngine):void {.inline.} = 
-  glClearColor(0.0, 0.0, 0.0, 1.0)                   # Set background color to black and opaque
-  glClearDepth(1.0)                                 # Set background depth to farthest
-  e.IsRunning = true
-  echo "Starting Game Engine"
-  glutMainLoop()
 
 
 proc display() {.cdecl.} =
@@ -145,14 +103,80 @@ proc display() {.cdecl.} =
   glutSwapBuffers() # Swap the front and back frame buffers (double buffering)
 
   
+  
+
+proc Unpause*(e:CoreEngine): void {.inline.} =
+  if e.IsPaused != true :
+    return 
+  echo "Unpausing Game Engine"
+  e.IsPaused = false
+
+proc Pause*(e:CoreEngine): void {.inline.} =
+  if e.IsPaused :
+    return 
+  echo "Pausing Game Engine"
+  e.IsPaused = true
+
+proc Start*(e:CoreEngine):void {.inline.} = 
+  glClearColor(0.0, 0.0, 0.0, 1.0)                   # Set background color to black and opaque
+  glClearDepth(1.0)                                 # Set background depth to farthest
+  e.IsRunning = true
+  echo "Starting Game Engine"
+  glutMainLoop()
+
+var engine: CoreEngine
+
+
+proc displayLoop() {.cdecl.}=
+  var frames = 0
+  var frameCounter = float(0)
+
+  let frameTime = 1/float(engine.config.FRAME_CAP)
+  var lastTime = cpuTime()
+  var unprocessedTime  =float(0)
+  echo lastTime
+
+  echo "I AM RUNNING"
+
+
+  while engine.IsRunning:
+
+    if engine.IsPaused != true:
+      var render = false
+      let startTime = cpuTime()
+      var passedTime = float(startTime) - float(lastTime)
+      lastTime = startTime
+
+      unprocessedTime = float(unprocessedTime) + float(passedTime)
+      frameCounter +=  passedTime
+      while unprocessedTime > frameTime:
+        render = true
+        unprocessedTime -= frameTime
+        
+        # e.game.Input()
+        # e.game.Update()
+
+        if float(frameCounter) > 0.1:
+            echo "FPS ",frames
+            frames = 0;
+            frameCounter = 0
+      if render :
+        # e.game.Render()
+        display()
+        frames = frames + 1
+      else :
+        sleep(1)  
+
+
+
 
 proc CreateCoreEngine*(config : Configuration, game: Game) : CoreEngine =
-  let engine = CoreEngine(config:config, game:game,IsRunning:false, time: MyTime(d: 0))
+  engine = CoreEngine(config:config, game:game,IsRunning:false, time: MyTime(d: 0))
 
 
   window.CreateWindow(config.WINDOW_WIDTH,config.WINDOW_HEIGHT,config.NAME)
   glutReshapeFunc(reshape)
-  glutDisplayFunc(display)
+  glutDisplayFunc(displayLoop)
 
   loadExtensions()
 
