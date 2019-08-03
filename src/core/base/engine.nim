@@ -9,6 +9,7 @@ type
   CoreEngine* = ref object of RootObj
     config*: Configuration
     IsRunning*: bool
+    IsPaused*: bool
     time*:  MyTime
   #game Game
 
@@ -26,7 +27,6 @@ proc Stop*(e:CoreEngine): void {.inline} =
   e.IsRunning = false
 
 proc displayLoop(e: CoreEngine): void {.inline.} =
-  e.IsRunning = true
   let frame = 0
   var frameCounter = 0
 
@@ -37,28 +37,36 @@ proc displayLoop(e: CoreEngine): void {.inline.} =
 
   echo "I AM RUNNING"
   while e.IsRunning:
-    var render = false
-    let startTime = cpuTime()
-    var passedTime = float(startTime) - float(lastTime)
-    lastTime = startTime
+    if e.IsPaused != true:
+      var render = false
+      let startTime = cpuTime()
+      var passedTime = float(startTime) - float(lastTime)
+      lastTime = startTime
 
-    unprocessedTime = float(unprocessedTime) + float(passedTime)/float(SECOND)
-    frameCounter +=  int(passedTime)
+      unprocessedTime = float(unprocessedTime) + float(passedTime)/float(SECOND)
+      frameCounter +=  int(passedTime)
 
-    while unprocessedTime > frameTime:
-      render = true
-      unprocessedTime -= frameTime
+      while unprocessedTime > frameTime:
+        render = true
+        unprocessedTime -= frameTime
 
-proc Start*(e:CoreEngine): void {.inline.} =
-  if e.IsRunning :
+proc Unpause*(e:CoreEngine): void {.inline.} =
+  if e.IsPaused != true :
     return 
-  echo "Starting Game Engine"
-  e.IsRunning = true
+  echo "Unpausing Game Engine"
+  e.IsPaused = false
 
+proc Pause*(e:CoreEngine): void {.inline.} =
+  if e.IsPaused :
+    return 
+  echo "Pausing Game Engine"
+  e.IsPaused = true
 
-proc Init*(e:CoreEngine):void {.inline.} = 
+proc Start*(e:CoreEngine):void {.inline.} = 
   glClearColor(0.0, 0.0, 0.0, 1.0)                   # Set background color to black and opaque
   glClearDepth(1.0)                                 # Set background depth to farthest
+  e.IsRunning = true
+  echo "Starting Game Engine"
   glutMainLoop()
 
 

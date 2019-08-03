@@ -5,6 +5,7 @@ import opengl
 import opengl/glu
 import core/utils/fileUtils as fu
 import core/base/engine
+import core/game/game
 
 proc display() {.cdecl.} =
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT) # Clear color and depth buffers
@@ -97,6 +98,10 @@ let coreEngine = CreateCoreEngine(config)
 
 
 echo fu.LoadMesh("src/ressources/meshs/cube.obj")
+
+let g = CreateGame()
+echo g.CurrentScene
+
 glutDisplayFunc(display)
 glutReshapeFunc(reshape)
 
@@ -106,5 +111,5 @@ glEnable(GL_DEPTH_TEST)                           # Enable depth testing for z-c
 glDepthFunc(GL_LEQUAL)                            # Set the type of depth-test
 glShadeModel(GL_SMOOTH)                           # Enable smooth shading
 glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST) # Nice perspective corrections
-coreEngine.Init()
+coreEngine.Start()
 
