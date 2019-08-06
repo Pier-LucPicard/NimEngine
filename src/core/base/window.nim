@@ -2,13 +2,16 @@ import opengl/glut
 import opengl
 import opengl/glu
 
+
 proc CreateWindow*(width, height :int, title :string) : void =
   var argc: cint = 0
   glutInit(addr argc, nil)
   glutInitDisplayMode(GLUT_DOUBLE)
   glutInitWindowSize(width, height)
   glutInitWindowPosition(50, 50)
-  discard glutCreateWindow(title)
+  glutSetWindow(glutCreateWindow(title))
+
+
 
 proc reshape*(width: GLsizei, height: GLsizei) {.cdecl.} =
   # Compute aspect ratio of the new window

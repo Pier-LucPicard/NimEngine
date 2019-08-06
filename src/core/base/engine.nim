@@ -126,49 +126,40 @@ proc Start*(e:CoreEngine):void {.inline.} =
 
 var engine: CoreEngine
 
+var frames = 0
+var frameCounter = float(0)
+var lastTime = cpuTime()
+var unprocessedTime  =float(0)
+var render = false;
+var passedTime =  float(0)
 
 proc displayLoop() {.cdecl.}=
-  var frames = 0
-  var frameCounter = float(0)
-
   let frameTime = 1/float(engine.config.FRAME_CAP)
-  var lastTime = cpuTime()
-  var unprocessedTime  =float(0)
-  echo lastTime
 
-  echo "I AM RUNNING"
+  if engine.IsPaused != true:
+    render = false
+    let startTime = cpuTime()
+    passedTime = float64(startTime) - float64(lastTime)
+    lastTime = startTime
 
+    unprocessedTime +=  float64(passedTime)
+    frameCounter +=  passedTime
+    if unprocessedTime > frameTime:
+      render = true
+      unprocessedTime -= frameTime
+      
+      # e.game.Input()
+      # e.game.Update()
+      sleep(10)
+      glutPostRedisplay()
+      engine.IsRunning = false
+      frames = frames + 1
 
-  while engine.IsRunning:
-
-    if engine.IsPaused != true:
-      var render = false
-      let startTime = cpuTime()
-      var passedTime = float(startTime) - float(lastTime)
-      lastTime = startTime
-
-      unprocessedTime = float(unprocessedTime) + float(passedTime)
-      frameCounter +=  passedTime
-      while unprocessedTime > frameTime:
-        render = true
-        unprocessedTime -= frameTime
-        
-        # e.game.Input()
-        # e.game.Update()
-
-        if float(frameCounter) > 0.1:
-            echo "FPS ",frames
-            frames = 0;
-            frameCounter = 0
-      if render :
-        # e.game.Render()
-        display()
-        frames = frames + 1
-      else :
-        sleep(1)  
-
-
-
+      if float(frameCounter) > 0.1:
+          echo "FPS ",frames
+          frames = 0;
+          frameCounter = 0
+      
 
 proc CreateCoreEngine*(config : Configuration, game: Game) : CoreEngine =
   engine = CoreEngine(config:config, game:game,IsRunning:false, time: MyTime(d: 0))
@@ -176,13 +167,14 @@ proc CreateCoreEngine*(config : Configuration, game: Game) : CoreEngine =
 
   window.CreateWindow(config.WINDOW_WIDTH,config.WINDOW_HEIGHT,config.NAME)
   glutReshapeFunc(reshape)
-  glutDisplayFunc(displayLoop)
+  glutDisplayFunc(display)
+  glutIdleFunc(displayLoop)
 
   loadExtensions()
-
   glEnable(GL_DEPTH_TEST)                           # Enable depth testing for z-culling
   glDepthFunc(GL_LEQUAL)                            # Set the type of depth-test
   glShadeModel(GL_SMOOTH)                           # Enable smooth shading
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST) # Nice perspective corrections
+
 
   return engine
